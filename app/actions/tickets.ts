@@ -8,6 +8,10 @@ import { ticketSchema } from "@/lib/validations";
 
 export type ActionResult = { success: boolean; message: string; id?: string };
 
+function accessibleTicket(id: string, userId: string, role: "CLIENT" | "ADMIN") {
+  return { id, ...(role === "ADMIN" ? {} : { userId }) };
+}
+
 export async function createTicket(input: unknown): Promise<ActionResult> {
   const session = await requireSession();
   const parsed = ticketSchema.safeParse(input);
@@ -28,7 +32,7 @@ export async function updateTicket(id: string, input: unknown): Promise<ActionRe
   const session = await requireSession();
   const parsed = ticketSchema.safeParse(input);
   if (!parsed.success) return { success: false, message: parsed.error.issues[0]?.message ?? "Invalid ticket." };
-  const result = await db.ticket.updateMany({ where: { id, userId: session.user.id }, data: parsed.data });
+  const result = await db.ticket.updateMany({ where: accessibleTicket(id, session.user.id, session.user.role === "ADMIN" ? "ADMIN" : "CLIENT"), data: parsed.data });
   if (!result.count) return { success: false, message: "Ticket not found." };
   revalidatePath("/dashboard");
   revalidatePath("/tickets");
@@ -38,7 +42,7 @@ export async function updateTicket(id: string, input: unknown): Promise<ActionRe
 
 export async function setTicketClosed(id: string, closed: boolean): Promise<ActionResult> {
   const session = await requireSession();
-  const result = await db.ticket.updateMany({ where: { id, userId: session.user.id }, data: { status: closed ? "CLOSED" : "OPEN" } });
+  const result = await db.ticket.updateMany({ where: accessibleTicket(id, session.user.id, session.user.role === "ADMIN" ? "ADMIN" : "CLIENT"), data: { status: closed ? "CLOSED" : "OPEN" } });
   if (!result.count) return { success: false, message: "Ticket not found." };
   revalidatePath("/dashboard");
   revalidatePath("/tickets");
@@ -48,7 +52,7 @@ export async function setTicketClosed(id: string, closed: boolean): Promise<Acti
 
 export async function deleteTicket(id: string) {
   const session = await requireSession();
-  const result = await db.ticket.deleteMany({ where: { id, userId: session.user.id } });
+  const result = await db.ticket.deleteMany({ where: accessibleTicket(id, session.user.id, session.user.role === "ADMIN" ? "ADMIN" : "CLIENT") });
   if (!result.count) return { success: false, message: "Ticket not found." };
   revalidatePath("/dashboard");
   revalidatePath("/tickets");

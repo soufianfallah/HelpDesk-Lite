@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { Headphones, LayoutDashboard, LogOut, Menu, Plus, Ticket, X } from "lucide-react";
+import { Headphones, LayoutDashboard, LogOut, Menu, Plus, ShieldCheck, Ticket, X } from "lucide-react";
 import { signOut } from "@/lib/auth-client";
 import { cn, initials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ const links = [
   { href: "/tickets/new", label: "New ticket", icon: Plus },
 ];
 
-export function AppShell({ user, children }: { user: { name: string; email: string }; children: React.ReactNode }) {
+export function AppShell({ user, children }: { user: { name: string; email: string; role: "CLIENT" | "ADMIN" }; children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -33,13 +33,14 @@ export function AppShell({ user, children }: { user: { name: string; email: stri
           <Button className="lg:hidden" variant="ghost" size="icon" onClick={() => setOpen(false)}><X className="h-5 w-5" /></Button>
         </div>
         <nav className="flex-1 space-y-1 p-3">
+          {user.role === "ADMIN" && <Link href="/admin" onClick={() => setOpen(false)} className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground", pathname.startsWith("/admin") && "bg-accent text-accent-foreground")}><ShieldCheck className="h-4 w-4" />Admin queue</Link>}
           {links.map(({ href, label, icon: Icon }) => {
             const active = href === "/tickets" ? pathname === href || /^\/tickets\/[^/]+$/.test(pathname) : pathname === href;
             return <Link key={href} href={href} onClick={() => setOpen(false)} className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground", active && "bg-accent text-accent-foreground")}><Icon className="h-4 w-4" />{label}</Link>;
           })}
         </nav>
         <div className="border-t p-4">
-          <div className="mb-3 flex items-center gap-3"><Avatar><AvatarFallback>{initials(user.name)}</AvatarFallback></Avatar><div className="min-w-0"><p className="truncate text-sm font-medium">{user.name}</p><p className="truncate text-xs text-muted-foreground">{user.email}</p></div></div>
+          <div className="mb-3 flex items-center gap-3"><Avatar><AvatarFallback>{initials(user.name)}</AvatarFallback></Avatar><div className="min-w-0"><div className="flex items-center gap-2"><p className="truncate text-sm font-medium">{user.name}</p>{user.role === "ADMIN" && <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">ADMIN</span>}</div><p className="truncate text-xs text-muted-foreground">{user.email}</p></div></div>
           <Button variant="ghost" className="w-full justify-start text-muted-foreground" onClick={logout}><LogOut className="h-4 w-4" />Sign out</Button>
         </div>
       </aside>

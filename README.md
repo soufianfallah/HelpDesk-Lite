@@ -1,6 +1,7 @@
 # HelpDesk Lite
 https://helpdesk-lite-beryl.vercel.app/login
-A focused, portfolio-quality support ticket application built with Next.js. Users can securely register, sign in, manage their own tickets, search and filter requests, and keep a chronological discussion on each ticket.
+
+A focused, portfolio-quality support ticket application built with Next.js. Clients can securely submit and track support requests, while administrators manage the complete ticket queue and respond to clients.
 
 ## Stack and tools
 
@@ -37,7 +38,7 @@ prisma/
 types/                      # Shared display labels and types
 ```
 
-Pages in `app/(app)` call `requireSession()` before reading data. Every query and mutation also includes the authenticated `userId`; knowing another ticket ID therefore does not grant access. Validation runs in the browser for immediate feedback and again inside server actions, where it is part of the security boundary.
+Pages in `app/(app)` call `requireSession()` before reading data. Client queries and mutations include the authenticated `userId`, while admin pages require the `ADMIN` role on the server. Validation runs in the browser for immediate feedback and again inside server actions, where it is part of the security boundary.
 
 Better Auth intentionally stores the password hash in its `Account.password` field, not on `User`. This avoids keeping a second password copy while fulfilling credential authentication securely. The additional `Session`, `Account`, and `Verification` models are required by Better Auth.
 
@@ -57,6 +58,7 @@ Requirements: Node.js 20.9 or newer and a PostgreSQL database.
    DATABASE_URL="postgresql://postgres:password@localhost:5432/helpdesk_lite?schema=public"
    BETTER_AUTH_SECRET="a-random-secret-at-least-32-characters-long"
    BETTER_AUTH_URL="http://localhost:3000"
+   ADMIN_EMAIL="admin@example.com"
    ```
 
    Generate a secret with `openssl rand -base64 32`.
@@ -75,6 +77,8 @@ Requirements: Node.js 20.9 or newer and a PostgreSQL database.
    ```
 
 Open [http://localhost:3000](http://localhost:3000), register an account, and create a ticket.
+
+The account matching `ADMIN_EMAIL` is promoted to administrator after registration. Every other registration defaults to `CLIENT`.
 
 ## Database workflow
 
@@ -96,7 +100,7 @@ The seed is idempotent: existing category names are skipped.
 
 1. Push the repository to GitHub, GitLab, or Bitbucket and import it in Vercel.
 2. Provision a PostgreSQL database (for example, Neon, Supabase, or Vercel Postgres).
-3. Add `DATABASE_URL`, `BETTER_AUTH_SECRET`, and `BETTER_AUTH_URL` in Vercel project settings. Set `BETTER_AUTH_URL` to the production URL, such as `https://your-project.vercel.app`.
+3. Add `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, and `ADMIN_EMAIL` in Vercel project settings. Set `BETTER_AUTH_URL` to the production URL, such as `https://your-project.vercel.app`.
 4. Apply migrations against the production database once:
 
    ```bash
@@ -121,4 +125,4 @@ For a custom domain, update `BETTER_AUTH_URL` to the final HTTPS origin and rede
 
 ## Included scope
 
-Authentication, per-user ticket CRUD, close/reopen controls, title search, status/category filters, dashboard totals, recent tickets, chronological comments, responsive navigation, dark mode, dialogs, toasts, and loading/error states are included. The project deliberately excludes admin features, roles, email, notifications, uploads, charts, analytics, AI, WebSockets, Docker, and external APIs.
+Authentication, client ticket CRUD, an administrator queue, role-aware authorization, close/reopen controls, title search, status/category filters, dashboard totals, recent tickets, chronological client/support discussions, responsive navigation, dark mode, dialogs, toasts, and loading/error states are included. The project deliberately excludes user-management screens, email, notifications, uploads, charts, analytics, AI, WebSockets, Docker, and external APIs.
