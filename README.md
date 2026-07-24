@@ -1,7 +1,45 @@
 # HelpDesk Lite
-https://helpdesk-lite-beryl.vercel.app/login
+
+**Live demo:** [https://helpdesk-lite-beryl.vercel.app](https://helpdesk-lite-beryl.vercel.app)
 
 A focused, portfolio-quality support ticket application built with Next.js. Clients can securely submit and track support requests, while administrators manage the complete ticket queue and respond to clients.
+
+## User roles and workflow
+
+HelpDesk Lite provides two server-enforced roles:
+
+### Client
+
+- Registers and signs in through Better Auth.
+- Creates support tickets with a title, description, category, and priority.
+- Views, searches, and filters only their own tickets.
+- Edits, closes, reopens, or deletes their own tickets.
+- Adds comments and reads support responses in chronological order.
+- Cannot access the admin dashboard or another client's ticket, even with its URL.
+
+### Administrator
+
+- Sees an **ADMIN** badge in the sidebar.
+- Gets an additional **Admin queue** navigation link.
+- Views dashboard totals across all clients.
+- Searches and filters the complete ticket queue.
+- Sees the client name and email associated with each ticket.
+- Replies to discussions with a visible **SUPPORT** label.
+- Edits, closes, reopens, or deletes any client ticket.
+
+The application flow is:
+
+```text
+Client creates a ticket
+        ↓
+Administrator reviews it in the admin queue
+        ↓
+Administrator responds and updates the status
+        ↓
+Client and administrator continue the discussion
+        ↓
+The ticket is closed when resolved
+```
 
 ## Stack and tools
 
@@ -79,6 +117,42 @@ Requirements: Node.js 20.9 or newer and a PostgreSQL database.
 Open [http://localhost:3000](http://localhost:3000), register an account, and create a ticket.
 
 The account matching `ADMIN_EMAIL` is promoted to administrator after registration. Every other registration defaults to `CLIENT`.
+
+## Managing administrators
+
+The project deliberately does not expose role management through the website. Administrator access is assigned directly in PostgreSQL so clients cannot elevate their own privileges.
+
+### Add another administrator
+
+First, have the person register normally in HelpDesk Lite. Then open the Neon SQL Editor (or another PostgreSQL client connected to the application database) and run:
+
+```sql
+UPDATE "user"
+SET "role" = 'ADMIN'
+WHERE lower("email") = lower('new-admin@example.com');
+```
+
+Replace `new-admin@example.com` with the registered account's email. Confirm the result:
+
+```sql
+SELECT "name", "email", "role"
+FROM "user"
+WHERE lower("email") = lower('new-admin@example.com');
+```
+
+The administrator must sign out and sign back in after the update so Better Auth issues a fresh session containing the new role.
+
+### Remove administrator access
+
+```sql
+UPDATE "user"
+SET "role" = 'CLIENT'
+WHERE lower("email") = lower('admin@example.com');
+```
+
+After being changed back to `CLIENT`, that user can access only their own tickets. They should sign out and sign back in to refresh the session.
+
+`ADMIN_EMAIL` automatically promotes one designated email when that account is created. Additional administrators can be assigned with the SQL command above.
 
 ## Database workflow
 
