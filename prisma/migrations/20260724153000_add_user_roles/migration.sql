@@ -1,0 +1,5 @@
+CREATE TYPE "UserRole" AS ENUM ('CLIENT', 'ADMIN');
+
+ALTER TABLE "user"
+ADD COLUMN "role" "UserRole" NOT NULL DEFAULT 'CLIENT';
+

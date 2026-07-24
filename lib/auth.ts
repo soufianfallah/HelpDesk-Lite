@@ -14,6 +14,25 @@ export const auth = betterAuth({
   },
   user: {
     deleteUser: { enabled: false },
+    additionalFields: {
+      role: {
+        type: ["CLIENT", "ADMIN"],
+        required: false,
+        defaultValue: "CLIENT",
+        input: false,
+      },
+    },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          if (process.env.ADMIN_EMAIL && user.email.toLowerCase() === process.env.ADMIN_EMAIL.toLowerCase()) {
+            await db.user.update({ where: { id: user.id }, data: { role: "ADMIN" } });
+          }
+        },
+      },
+    },
   },
 });
 
